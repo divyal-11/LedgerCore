@@ -1,0 +1,28 @@
+# Secrets
+.env
+.env.local
+.env.production
+
+# Dependencies
+node_modules/
+packages/*/node_modules/
+
+# Build outputs
+packages/backend/dist/
+packages/frontend/.next/
+packages/frontend/out/
+
+# Database volumes
+pgdata/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
