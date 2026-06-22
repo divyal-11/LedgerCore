@@ -5,13 +5,11 @@ import Link from 'next/link';
 import { api, AccountTreeNode, CreateAccountData } from '@/lib/api';
 
 export default function AccountsPage() {
-  const [accounts, setAccounts] = useState<AccountTreeNode[]>([]);
-  const [loading, setLoading] = useState(true);
-  
-  // Create account state
+  const [accounts, setAccounts]       = useState<AccountTreeNode[]>([]);
+  const [loading, setLoading]         = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState<CreateAccountData>({
+  const [formData, setFormData]       = useState<CreateAccountData>({
     code: '',
     name: '',
     type: 'ASSET',
@@ -28,9 +26,7 @@ export default function AccountsPage() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => {
-    loadAccounts();
-  }, []);
+  useEffect(() => { loadAccounts(); }, []);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,17 +34,9 @@ export default function AccountsPage() {
     try {
       const payload = { ...formData };
       if (!payload.parent_id) delete payload.parent_id;
-      
       await api.createAccount(payload);
       setIsCreateOpen(false);
-      setFormData({
-        code: '',
-        name: '',
-        type: 'ASSET',
-        normal_balance: 'DEBIT',
-        parent_id: '',
-        description: '',
-      });
+      setFormData({ code: '', name: '', type: 'ASSET', normal_balance: 'DEBIT', parent_id: '', description: '' });
       loadAccounts();
     } catch (err) {
       alert((err as Error).message || 'Failed to create account');
@@ -57,41 +45,53 @@ export default function AccountsPage() {
     }
   };
 
-  if (loading && accounts.length === 0) return <div className="loading">Loading chart of accounts...</div>;
-
   return (
     <div className="fade-in">
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <h1>Chart of Accounts</h1>
-          <p>Hierarchical account structure powered by recursive CTE — click any leaf account to view its ledger</p>
+          <p>Hierarchical account structure · powered by recursive CTE</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setIsCreateOpen(true)}>
-          + Add Account
+        <button
+          id="add-account-btn"
+          className="btn btn-primary"
+          style={{ marginTop: 4 }}
+          onClick={() => setIsCreateOpen(true)}
+        >
+          <span>+</span> Add Account
         </button>
       </div>
 
+      {/* Create Account Form */}
       {isCreateOpen && (
-        <div className="card fade-in" style={{ marginBottom: '24px', border: '1px solid var(--color-accent-blue)' }}>
-          <h3 style={{ marginBottom: '16px' }}>Create New Account</h3>
-          <form onSubmit={handleCreate} style={{ display: 'grid', gap: '16px', gridTemplateColumns: '1fr 1fr' }}>
+        <div
+          className="card fade-in"
+          style={{ marginBottom: 24, border: '1px solid rgba(79,158,255,0.25)', boxShadow: '0 0 40px rgba(79,158,255,0.08)' }}
+        >
+          <div className="card-title">
+            <div className="card-title-icon" style={{ background: 'rgba(79,158,255,0.12)', border: '1px solid rgba(79,158,255,0.2)' }}>+</div>
+            Create New Account
+          </div>
+          <form id="create-account-form" onSubmit={handleCreate} style={{ display: 'grid', gap: 16, gridTemplateColumns: '1fr 1fr' }}>
             <div className="form-group">
               <label className="form-label">Account Code</label>
               <input
+                id="account-code-input"
                 type="text"
-                className="form-control"
+                className="form-input mono"
                 value={formData.code}
                 onChange={e => setFormData({ ...formData, code: e.target.value })}
                 required
                 placeholder="e.g. 1150"
               />
             </div>
-            
+
             <div className="form-group">
               <label className="form-label">Account Name</label>
               <input
+                id="account-name-input"
                 type="text"
-                className="form-control"
+                className="form-input"
                 value={formData.name}
                 onChange={e => setFormData({ ...formData, name: e.target.value })}
                 required
@@ -102,6 +102,7 @@ export default function AccountsPage() {
             <div className="form-group">
               <label className="form-label">Type</label>
               <select
+                id="account-type-select"
                 className="form-select"
                 value={formData.type}
                 onChange={e => setFormData({ ...formData, type: e.target.value })}
@@ -118,6 +119,7 @@ export default function AccountsPage() {
             <div className="form-group">
               <label className="form-label">Normal Balance</label>
               <select
+                id="normal-balance-select"
                 className="form-select"
                 value={formData.normal_balance}
                 onChange={e => setFormData({ ...formData, normal_balance: e.target.value })}
@@ -131,91 +133,111 @@ export default function AccountsPage() {
             <div className="form-group" style={{ gridColumn: '1 / -1' }}>
               <label className="form-label">Parent Account (Optional)</label>
               <select
+                id="parent-account-select"
                 className="form-select"
                 value={formData.parent_id}
                 onChange={e => setFormData({ ...formData, parent_id: e.target.value })}
               >
-                <option value="">-- No Parent (Root Level) --</option>
+                <option value="">— No Parent (Root Level) —</option>
                 {accounts.map(acc => (
                   <option key={acc.id} value={acc.id}>
                     {acc.indented_name} ({acc.code})
                   </option>
                 ))}
               </select>
-              <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '4px' }}>
-                Note: Selecting a parent will mark the parent as a non-leaf account.
+              <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 5 }}>
+                Selecting a parent marks it as a non-leaf account in the hierarchy.
               </div>
             </div>
 
-            <div className="form-group" style={{ gridColumn: '1 / -1', display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>
-              <button 
-                type="button" 
-                className="btn btn-secondary" 
+            <div className="form-group" style={{ gridColumn: '1 / -1', display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 4 }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
                 onClick={() => setIsCreateOpen(false)}
               >
                 Cancel
               </button>
-              <button 
-                type="submit" 
+              <button
+                id="create-account-submit"
+                type="submit"
                 className="btn btn-primary"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? 'Creating...' : 'Create Account'}
+                {isSubmitting ? 'Creating…' : 'Create Account'}
               </button>
             </div>
           </form>
         </div>
       )}
 
+      {/* Accounts Table */}
       <div className="card">
-        <div style={{ overflowX: 'auto' }}>
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Code</th>
-                <th>Account Name</th>
-                <th>Type</th>
-                <th>Normal Balance</th>
-                <th>Leaf</th>
-              </tr>
-            </thead>
-            <tbody style={{ opacity: loading ? 0.5 : 1, transition: 'opacity 0.2s' }}>
-              {accounts.map((account) => (
-                <tr key={account.id}>
-                  <td className="mono">{account.code}</td>
-                  <td>
-                    <div style={{ paddingLeft: `${account.depth * 24}px`, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      {!account.is_leaf && <span style={{ color: 'var(--color-text-muted)' }}>▼</span>}
-                      {account.is_leaf ? (
-                        <Link
-                          href={`/accounts/${account.id}`}
-                          style={{ color: 'var(--color-accent-blue)', textDecoration: 'none', fontWeight: 400 }}
-                        >
-                          {account.name}
-                        </Link>
-                      ) : (
-                        <span className="tree-branch">{account.name}</span>
-                      )}
-                    </div>
-                  </td>
-                  <td><span className={`badge badge-${account.type}`}>{account.type}</span></td>
-                  <td>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: account.normal_balance === 'DEBIT' ? 'var(--color-accent-red)' : 'var(--color-accent-green)' }}>
-                      {account.normal_balance}
-                    </span>
-                  </td>
-                  <td>
-                    {account.is_leaf ? (
-                      <span style={{ color: 'var(--color-accent-green)' }}>●</span>
-                    ) : (
-                      <span style={{ color: 'var(--color-text-muted)' }}>○</span>
-                    )}
-                  </td>
+        {loading && accounts.length === 0 ? (
+          <div className="loading">
+            <div className="loading-spinner" />
+            <span>Loading chart of accounts…</span>
+          </div>
+        ) : (
+          <div style={{ overflowX: 'auto', opacity: loading ? 0.5 : 1, transition: 'opacity 0.2s' }}>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Account Name</th>
+                  <th>Type</th>
+                  <th>Normal Balance</th>
+                  <th className="text-center">Leaf</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {accounts.map((account) => (
+                  <tr key={account.id}>
+                    <td className="mono" style={{ fontWeight: 600, color: 'var(--text-2)' }}>
+                      {account.code}
+                    </td>
+                    <td>
+                      <div style={{ paddingLeft: `${account.depth * 22}px`, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {!account.is_leaf && (
+                          <span style={{ color: 'var(--text-3)', fontSize: 10 }}>▼</span>
+                        )}
+                        {account.is_leaf ? (
+                          <Link
+                            href={`/accounts/${account.id}`}
+                            style={{ color: 'var(--brand-blue)', textDecoration: 'none', fontWeight: 400 }}
+                          >
+                            {account.name}
+                          </Link>
+                        ) : (
+                          <span style={{ fontWeight: 600, color: 'var(--text-1)' }}>{account.name}</span>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`badge badge-${account.type}`}>{account.type}</span>
+                    </td>
+                    <td>
+                      <span style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: 11.5,
+                        fontWeight: 700,
+                        color: account.normal_balance === 'DEBIT' ? 'var(--brand-red)' : 'var(--brand-green)',
+                      }}>
+                        {account.normal_balance}
+                      </span>
+                    </td>
+                    <td className="text-center">
+                      {account.is_leaf
+                        ? <span style={{ color: 'var(--brand-green)', fontSize: 14 }}>●</span>
+                        : <span style={{ color: 'var(--text-3)', fontSize: 14 }}>○</span>
+                      }
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
